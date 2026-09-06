@@ -10,6 +10,9 @@
   <script>(function(){try{var d=document.documentElement,th=localStorage.getItem('uiTheme');
   if(th==='neon'){d.classList.add('neon','dark');}
   else{if(th&&th!=='neo')d.classList.add(th);if(localStorage.getItem('darkMode')==='1')d.classList.add('dark');}
+  var R=/^https:\/\/[^\s'"()\\<>]+$/,ih=localStorage.getItem('imgHero'),il=localStorage.getItem('imgLogin');
+  if(ih&&R.test(ih))d.style.setProperty('--img-hero',"url('"+ih+"')");
+  if(il&&R.test(il))d.style.setProperty('--img-login',"url('"+il+"')");
   }catch(e){}})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +25,9 @@
                      แนะนำขนาด 2400 x 800 px (แนวนอน)
        --img-login = รูปฝั่งซ้ายของหน้าเข้าสู่ระบบ + พื้นหลังแบนเนอร์บนมือถือ
                      แนะนำขนาด 1200 x 1400 px (แนวตั้ง)
-       วิธีใส่: เปลี่ยนจาก  none  เป็น  url('https://ลิงก์รูปของคุณ')
+       ⭐ วิธีที่ง่ายที่สุด: เข้าหน้าแอดมิน -> แท็บ "ตั้งค่าระบบ" -> หัวข้อ "รูปแบนเนอร์ของระบบ"
+          วางลิงก์แล้วกดบันทึก ระบบจะเก็บลงชีท Settings และทับค่าด้านล่างนี้ให้เอง
+       (ถ้าอยากตั้งค่าเริ่มต้นแบบตายตัวก็แก้ตรงนี้ได้: เปลี่ยน none เป็น url('https://...'))
        ตัวอย่าง: --img-hero:url('https://i.postimg.cc/xxxxxx/final-banner.png');
        ถ้ายังไม่ใส่ ระบบจะใช้พื้นหลังไล่สีน้ำตาลแทนให้อัตโนมัติ
        ═══════════════════════════════════════════════════════════════ */
@@ -212,6 +217,10 @@
     .pr-pw{font-family:'Sarabun',monospace;font-weight:900;font-size:30px;letter-spacing:3px;color:var(--main-dark);word-break:break-all;}
     html.dark .pr-pw-box{background:#332510;border-color:#F0B45C;}
     html.dark .pr-pw{color:#F0B45C;}
+    .img-preview{margin-top:8px;border:var(--border);border-radius:12px;overflow:hidden;background:#f5f3ee;}
+    .img-preview:empty{display:none;}
+    .img-preview img{display:block;width:100%;max-height:170px;object-fit:cover;}
+    html.dark .img-preview{background:#1e1e38;}
     .swal-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0;text-align:left;}
     @media(max-width:600px){.swal-edit-grid{grid-template-columns:1fr!important;}}
     /* ── EXAM TABLE VIEW ── */
@@ -878,6 +887,24 @@
         </div>
       </div>
       <div id="admin-tab-settings" style="display:none;max-width:720px;margin:0 auto;">
+        <div class="nb-card" style="padding:28px;margin-bottom:20px;">
+          <div class="section-eyebrow" style="margin-bottom:8px;"><span>🖼️</span> <span data-i18n="imgEyebrow">รูปแบนเนอร์ของระบบ</span></div>
+          <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:18px;line-height:1.7;" data-i18n="imgDesc">วางลิงก์รูปแล้วกดบันทึก ระบบจะเปลี่ยนให้ทุกหน้าและทุกเครื่องทันที ไม่ต้องแก้ไฟล์เอง — อัปโหลดรูปที่ postimages.cc แล้วก๊อปลิงก์ที่ขึ้นต้นด้วย https:// มาวาง ถ้าเว้นว่างไว้ ระบบจะใช้พื้นหลังไล่สีน้ำตาลแทน</p>
+          <div style="margin-bottom:16px;">
+            <label class="nb-label" data-i18n="imgHeroLabel">แบนเนอร์ด้านบน — แนะนำ 2400 x 820 px</label>
+            <input type="url" id="set-img-hero" class="nb-input" oninput="previewPortalImage('hero')" placeholder="https://i.postimg.cc/...">
+            <div class="img-preview" id="prev-img-hero"></div>
+          </div>
+          <div style="margin-bottom:18px;">
+            <label class="nb-label" data-i18n="imgLoginLabel">รูปหน้าเข้าสู่ระบบ — แนะนำ 1200 x 1300 px</label>
+            <input type="url" id="set-img-login" class="nb-input" oninput="previewPortalImage('login')" placeholder="https://i.postimg.cc/...">
+            <div class="img-preview" id="prev-img-login"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="savePortalImages()" class="nb-btn nb-btn-main" style="flex:1;min-width:180px;font-size:14px;padding:12px;"><span data-i18n="btnSaveImages">💾 บันทึกรูป</span></button>
+            <button onclick="clearPortalImages()" class="nb-btn nb-btn-white" style="font-size:14px;padding:12px 18px;"><span data-i18n="btnClearImages">ล้างรูป</span></button>
+          </div>
+        </div>
         <div class="nb-card" style="padding:28px;">
           <div class="section-eyebrow" style="margin-bottom:8px;"><span>🔓</span> <span data-i18n="unlockEyebrow">ปลดล็อกอุปกรณ์นักเรียน</span></div>
           <p style="font-size:13px;color:#666;font-weight:600;margin-bottom:18px;line-height:1.7;" data-i18n="unlockDesc">ระบบจำกัดให้ 1 ชื่อ ล็อกอินใช้งานได้ทีละ 1 เครื่องเท่านั้น (กันเพื่อนแอบเอารหัสไปเข้าซ้อน) โดยจะปลดล็อกอัตโนมัติให้เองถ้าไม่มีการใช้งานเกิน <b>8 ชั่วโมง</b> — ถ้านักเรียนเปลี่ยนเครื่อง/ล้างข้อมูลเบราว์เซอร์แล้วเข้าไม่ได้ก่อนครบเวลา ให้เลือกห้อง + ชื่อ แล้วกดปลดล็อกด่วนที่นี่ได้เลย</p>
@@ -968,7 +995,11 @@ addEyebrow:'เพิ่มรายวิชาสอบใหม่',fLevel:'�
 incompleteText:'กรุณากรอกข้อมูลในช่องที่มีดอกจันสีแดง',saving:'กำลังบันทึก...',savedTitle:'บันทึกสำเร็จ! ✅',editTitle:'แก้ไขวิชาสอบ',btnSaveEdit:'บันทึกการแก้ไข',editIncomplete:'กรุณากรอกข้อมูลให้ครบทุกช่องที่มี *',editSaved:'แก้ไขสำเร็จ! ✅',notFoundExam:'ไม่พบข้อมูลวิชานี้',
 dupTitle:'📋 คัดลอกวิชานี้ไปห้องอื่น',dupSubject:'วิชา:',dupTarget:'เลือกห้องเรียนปลายทาง',btnDupGo:'📋 คัดลอกเลย',dupDoing:'กำลังคัดลอก...',dupDone:'คัดลอกไปยัง {c} สำเร็จ! ✅',
 delConfirmTitle:'ยืนยันการลบ?',delText:'ต้องการลบวิชา <b>{s}</b> ใช่หรือไม่?',btnDelYes:'ใช่, ลบเลย',deleting:'กำลังลบ...',deleted:'ลบสำเร็จ!',
-unlockEyebrow:'ปลดล็อกอุปกรณ์นักเรียน',unlockDesc:'ระบบจำกัดให้ 1 ชื่อ ล็อกอินใช้งานได้ทีละ 1 เครื่องเท่านั้น (กันเพื่อนแอบเอารหัสไปเข้าซ้อน) โดยจะปลดล็อกอัตโนมัติให้เองถ้าไม่มีการใช้งานเกิน <b>8 ชั่วโมง</b> — ถ้านักเรียนเปลี่ยนเครื่อง/ล้างข้อมูลเบราว์เซอร์แล้วเข้าไม่ได้ก่อนครบเวลา ให้เลือกห้อง + ชื่อ แล้วกดปลดล็อกด่วนที่นี่ได้เลย',btnUnlock:'ปลดล็อกอุปกรณ์',warnUnlock:'กรุณาเลือกห้องเรียนและชื่อนักเรียน',unlocking:'กำลังปลดล็อก...',unlockedOk:'ปลดล็อกสำเร็จ! ✅',
+unlockEyebrow:'ปลดล็อกอุปกรณ์นักเรียน',unlockDesc:'ระบบจำกัดให้ 1 ชื่อ ล็อกอินใช้งานได้ทีละ 1 เครื่องเท่านั้น (กันเพื่อนแอบเอารหัสไปเข้าซ้อน) โดยจะปลดล็อกอัตโนมัติให้เองถ้าไม่มีการใช้งานเกิน <b>8 ชั่วโมง</b> — ถ้านักเรียนเปลี่ยนเครื่อง/ล้างข้อมูลเบราว์เซอร์แล้วเข้าไม่ได้ก่อนครบเวลา ให้เลือกห้อง + ชื่อ แล้วกดปลดล็อกด่วนที่นี่ได้เลย',btnUnlock:'ปลดล็อกอุปกรณ์',warnUnlock:'กรุณาเลือกห้องเรียนและชื่อนักเรียน',unlocking:'กำลังปลดล็อก...',unlockedOk:'ปลดล็อกสำเร็จ! ✅',badExamLink:'ลิงก์ข้อสอบของวิชานี้ไม่ถูกต้อง กรุณาแจ้งคุณครู',
+imgEyebrow:'รูปแบนเนอร์ของระบบ',imgDesc:'วางลิงก์รูปแล้วกดบันทึก ระบบจะเปลี่ยนให้ทุกหน้าและทุกเครื่องทันที ไม่ต้องแก้ไฟล์เอง — อัปโหลดรูปที่ postimages.cc แล้วก๊อปลิงก์ที่ขึ้นต้นด้วย https:// มาวาง ถ้าเว้นว่างไว้ ระบบจะใช้พื้นหลังไล่สีน้ำตาลแทน',
+imgHeroLabel:'แบนเนอร์ด้านบน — แนะนำ 2400 x 820 px',imgLoginLabel:'รูปหน้าเข้าสู่ระบบ — แนะนำ 1200 x 1300 px',
+btnSaveImages:'💾 บันทึกรูป',btnClearImages:'ล้างรูป',imgSaved:'บันทึกรูปเรียบร้อยแล้ว ✅',
+imgInvalid:'ลิงก์ต้องขึ้นต้นด้วย https:// และห้ามมีช่องว่าง',imgPreviewFail:'โหลดรูปจากลิงก์นี้ไม่ได้ ลองตรวจลิงก์อีกครั้ง',actSettings:'🖼️ แก้ไขรูปแบนเนอร์',
 logoutQ:'ออกจากระบบ?',btnLogoutYes:'ออกจากระบบ',sessionExpired:'เซสชันหมดอายุ',noData:'ไม่มีข้อมูล',noExportRows:'ไม่มีรายการให้ส่งออกตามเงื่อนไขปัจจุบัน',exported:'ส่งออก {n} วิชาสำเร็จ ✅',csvName:'ตารางสอบปลายภาค',
 hClass:'ห้องเรียน',hDate:'วันที่สอบ',hTime:'เวลาสอบ',hSubject:'ชื่อวิชา',hTeacher:'รหัสวิชา/ครูผู้สอน',hPw:'รหัสผ่าน',hStatus:'สถานะ',hLink:'ลิงก์ข้อสอบ',hImage:'ลิงก์รูปพื้นหลัง',
 proctorTitle:'โหมดครูผู้คุมสอบ',proctorDesc:'เลือกห้องที่คุณคุมสอบ เพื่อดูรหัสผ่านของแต่ละวิชาได้ทันที ไม่ต้องเข้าหน้าแอดมิน',proctorPickHint:'เลือกห้องที่คุณคุมสอบด้านบน เพื่อดูรหัสผ่านของแต่ละวิชา',
@@ -1016,7 +1047,11 @@ addEyebrow:'Add a new exam',fLevel:'Class',fExamPw:'Exam password',fSubject:'Sub
 incompleteText:'Please fill in all required fields marked with *',saving:'Saving...',savedTitle:'Saved! ✅',editTitle:'Edit Exam',btnSaveEdit:'Save changes',editIncomplete:'Please fill in every field marked with *',editSaved:'Changes saved! ✅',notFoundExam:'Exam not found',
 dupTitle:'📋 Duplicate to another class',dupSubject:'Subject:',dupTarget:'Target classroom',btnDupGo:'📋 Duplicate',dupDoing:'Duplicating...',dupDone:'Duplicated to {c}! ✅',
 delConfirmTitle:'Confirm delete?',delText:'Delete <b>{s}</b>?',btnDelYes:'Yes, delete',deleting:'Deleting...',deleted:'Deleted!',
-unlockEyebrow:'Unlock a student device',unlockDesc:'Each name can be logged in on only 1 device at a time (prevents password sharing). Sessions auto-expire after <b>8 hours</b> of inactivity — if a student switches devices and gets locked out sooner, select their class + name here and unlock instantly.',btnUnlock:'Unlock device',warnUnlock:'Please select the classroom and student name',unlocking:'Unlocking...',unlockedOk:'Unlocked! ✅',
+unlockEyebrow:'Unlock a student device',unlockDesc:'Each name can be logged in on only 1 device at a time (prevents password sharing). Sessions auto-expire after <b>8 hours</b> of inactivity — if a student switches devices and gets locked out sooner, select their class + name here and unlock instantly.',btnUnlock:'Unlock device',warnUnlock:'Please select the classroom and student name',unlocking:'Unlocking...',unlockedOk:'Unlocked! ✅',badExamLink:'The exam link for this subject is invalid — please tell your teacher',
+imgEyebrow:'Portal banner images',imgDesc:'Paste an image URL and save — it updates every page on every device instantly, no file editing needed. Upload to postimages.cc and copy the https:// link. Leave blank to use the brown gradient background.',
+imgHeroLabel:'Top banner — recommended 2400 x 820 px',imgLoginLabel:'Login page image — recommended 1200 x 1300 px',
+btnSaveImages:'💾 Save images',btnClearImages:'Clear',imgSaved:'Images saved ✅',
+imgInvalid:'Link must start with https:// and contain no spaces',imgPreviewFail:'Could not load this image — please check the link',actSettings:'🖼️ Changed banner images',
 logoutQ:'Log out?',btnLogoutYes:'Log out',sessionExpired:'Session expired',noData:'No data',noExportRows:'No rows to export with the current filters',exported:'Exported {n} exams ✅',csvName:'Final_Exam_Schedule',
 hClass:'Classroom',hDate:'Exam date',hTime:'Time',hSubject:'Subject',hTeacher:'Course/Teacher',hPw:'Password',hStatus:'Status',hLink:'Exam link',hImage:'Background image URL',
 proctorTitle:'Proctor Mode',proctorDesc:'Pick the class you are proctoring to see every exam password instantly — no need to open the admin panel.',proctorPickHint:'Select the class you proctor above to see exam passwords',
@@ -1261,6 +1296,7 @@ function initApp(){
       confirmButtonColor:'#8A5A12'});},700);
   }
   renderLoginQuickAccess();
+  loadPortalImages();
   document.addEventListener('pointerdown',function(){ensureAudio();},{once:true});
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&projectorRow!==null)closeProjector();});
   try{history.replaceState({},'',window.location.pathname);}catch(e){}
@@ -1537,9 +1573,23 @@ function startBroadcastPolling(){
   pollBroadcast();
 }
 function stopBroadcastPolling(){if(bcTimer){clearInterval(bcTimer);bcTimer=null;}}
+// โพลเฉพาะช่วงที่ "ใกล้สอบหรือกำลังสอบ" เท่านั้น
+// นอกช่วงนั้นไม่มีรหัสผ่านให้รับอยู่แล้ว การยิงทุก 20 วินาทีตลอดวันทำให้
+// Apps Script ชนเพดาน simultaneous executions ตอนนักเรียนหลายร้อยคนเปิดหน้าพร้อมกัน
+function inBroadcastWindow(){
+  const now=Date.now();
+  return currentScheduleExams.some(function(ex){
+    if(!ex.date||!ex.time)return false;
+    const p=String(ex.time).split('-');if(p.length<2)return false;
+    const s=new Date(`${ex.date}T${p[0].trim()}:00`),e=new Date(`${ex.date}T${p[1].trim()}:00`);
+    if(isNaN(s.getTime())||isNaN(e.getTime()))return false;
+    return now>=s.getTime()-30*60000 && now<=e.getTime()+10*60000;  // ก่อนสอบ 30 นาที ถึงหลังหมดเวลา 10 นาที
+  });
+}
 function pollBroadcast(){
   if(!currentSession||currentSession.role!=='student'){stopBroadcastPolling();return;}
   if(document.getElementById('schedule-view').style.display==='none')return;
+  if(!inBroadcastWindow())return;
   callAPI('getBroadcast',{className:currentSession.className}).then(function(res){
     if(!res||!res.success||!res.broadcast)return;
     const b=res.broadcast;
@@ -1980,6 +2030,9 @@ function renderNextExamCard(){
 }
 function applyNextExamCardBackground(el,isLive,img){
   img=(img||'').trim();
+  // ค่านี้ถูกยัดลงใน CSS url() ตรงๆ ถ้ากรองแค่ ' ลิงก์ที่มี ) หรือ ; จะงัดออกไปเขียน CSS อื่นได้
+  // จึงรับเฉพาะ https ที่สะอาดเท่านั้น ลิงก์อื่นถือว่าไม่มีรูป (ใช้พื้นไล่สีแทน)
+  if(!IMG_URL_RE.test(img))img='';
   if(img){
     const tint=isLive
       ?'rgba(170,80,20,.90) 0%,rgba(170,80,20,.55) 42%,rgba(110,52,14,.14) 72%,rgba(0,0,0,0) 100%'
@@ -2104,7 +2157,12 @@ function promptExamPassword(row,subject,examDate,examTime){
   callAPI('verifyAndGetExamLink',payload).then(function(res){
     if(res.success){
       Swal.fire({icon:'success',title:t('unlockedTitle'),text:t('redirecting'),confirmButtonText:t('btnOpenExamNow'),confirmButtonColor:'#8A5A12',showCancelButton:false,allowOutsideClick:false,background:'#FDF4E6'})
-        .then(function(r){if(r.isConfirmed)window.open(res.link,'_blank');});
+        .then(function(r){
+          if(!r.isConfirmed)return;
+          // รับเฉพาะ http/https กัน javascript: ที่อาจหลุดมาจากการพิมพ์ผิดหรือวางลิงก์แปลกในชีท
+          if(!/^https?:\/\//i.test(String(res.link||'').trim())){Swal.fire(t('errTitle'),t('badExamLink'),'error');return;}
+          window.open(res.link,'_blank');
+        });
     }else Swal.fire(t('wrongExamPw'),res.message,'error');
   }).catch(handleScriptError);}});
 }
@@ -2129,6 +2187,7 @@ function switchAdminTab(tab){
   mL.style.cssText=_mcss;mA.style.cssText=_mcss;mN.style.cssText=_mcss;mS.style.cssText=_mcss;
   if(tab==='list')loadAdminData();
   if(tab==='announce'){buildAnnounceClassGrid();loadAnnouncementsAdminList();}
+  if(tab==='settings')loadPortalImageSettings();
 }
 
 function onUnlockClassChange(){
@@ -2155,8 +2214,64 @@ function unlockStudentDevice(){
   }).catch(handleScriptError);
 }
 
+/* ── รูปแบนเนอร์ของระบบ (ตั้งค่าจากหน้าแอดมิน เก็บในชีท Settings) ── */
+// อนุญาตเฉพาะ https และห้ามมีอักขระที่งัด CSS url() ออกได้
+const IMG_URL_RE=/^https:\/\/[^\s'"()\\<>]+$/;
+function applyPortalImages(hero,login){
+  const d=document.documentElement;
+  d.style.setProperty('--img-hero',IMG_URL_RE.test(hero||'')?`url('${hero}')`:'none');
+  d.style.setProperty('--img-login',IMG_URL_RE.test(login||'')?`url('${login}')`:'none');
+  // เก็บไว้ในเครื่องด้วย เพื่อให้รอบหน้ารูปขึ้นทันทีตั้งแต่ก่อนวาดหน้าจอ ไม่ต้องรอเรียก API
+  try{
+    hero?localStorage.setItem('imgHero',hero):localStorage.removeItem('imgHero');
+    login?localStorage.setItem('imgLogin',login):localStorage.removeItem('imgLogin');
+  }catch(e){}
+}
+function loadPortalImages(){
+  callAPI('getSettings').then(function(res){
+    if(res&&res.success)applyPortalImages(res.settings.imgHero,res.settings.imgLogin);
+  }).catch(function(){});
+}
+function previewPortalImage(which){
+  const inp=document.getElementById('set-img-'+which),box=document.getElementById('prev-img-'+which);
+  if(!inp||!box)return;
+  const v=(inp.value||'').trim();
+  if(!v){box.innerHTML='';return;}
+  if(!IMG_URL_RE.test(v)){box.innerHTML='<div style="padding:10px;font-size:12px;font-weight:700;color:var(--red);">'+t('imgInvalid')+'</div>';return;}
+  box.innerHTML='<img alt="preview">';
+  const im=box.querySelector('img');
+  im.onerror=function(){box.innerHTML='<div style="padding:10px;font-size:12px;font-weight:700;color:#888;">'+t('imgPreviewFail')+'</div>';};
+  im.src=v;
+}
+function loadPortalImageSettings(){
+  callAPI('getSettings').then(function(res){
+    if(!res||!res.success)return;
+    const a=document.getElementById('set-img-hero'),b=document.getElementById('set-img-login');
+    if(a)a.value=res.settings.imgHero||'';
+    if(b)b.value=res.settings.imgLogin||'';
+    previewPortalImage('hero');previewPortalImage('login');
+    applyPortalImages(res.settings.imgHero,res.settings.imgLogin);
+  }).catch(function(){});
+}
+function savePortalImages(){
+  const hero=(document.getElementById('set-img-hero').value||'').trim();
+  const login=(document.getElementById('set-img-login').value||'').trim();
+  if((hero&&!IMG_URL_RE.test(hero))||(login&&!IMG_URL_RE.test(login))){Swal.fire(t('warnTitle'),t('imgInvalid'),'warning');return;}
+  Swal.fire({title:t('saving'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  callAPI('saveSettings',{password:currentSession?currentSession.password:'',settings:{imgHero:hero,imgLogin:login}}).then(function(res){
+    if(res.success){applyPortalImages(hero,login);Swal.fire({icon:'success',title:t('imgSaved'),timer:1800,showConfirmButton:false});}
+    else Swal.fire(t('errTitle'),res.message,'error');
+  }).catch(handleScriptError);
+}
+function clearPortalImages(){
+  const a=document.getElementById('set-img-hero'),b=document.getElementById('set-img-login');
+  if(a)a.value='';if(b)b.value='';
+  previewPortalImage('hero');previewPortalImage('login');
+  savePortalImages();
+}
+
 /* ── AUDIT LOG ── */
-const AUDIT_ACTION_KEYS={add:'actAdd',edit:'actEdit',delete:'actDelete',broadcast:'actBroadcast',unlock:'actUnlock',announce:'actAnnounce',delete_announce:'actDeleteAnnounce',makeup:'actMakeup'};
+const AUDIT_ACTION_KEYS={add:'actAdd',edit:'actEdit',delete:'actDelete',broadcast:'actBroadcast',unlock:'actUnlock',settings:'actSettings',announce:'actAnnounce',delete_announce:'actDeleteAnnounce',makeup:'actMakeup'};
 function viewAuditLog(){
   Swal.fire({
     title:t('auditTitle'),width:Math.min(560,window.innerWidth-24),
@@ -2355,7 +2470,7 @@ function renderAdminGrid(exams){
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
         </div>
-        <a href="${exam.link}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;word-break:break-all;display:block;margin-top:6px;text-decoration:none;">${t('cardLink')}</a>
+        <a href="${encAttr(exam.link)}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;word-break:break-all;display:block;margin-top:6px;text-decoration:none;">${t('cardLink')}</a>
         ${exam.image?`<div style="font-size:11px;color:#888;font-weight:600;margin-top:4px;">🖼️ ${t('hasImage')}</div>`:''}
       </div>
       <div class="admin-card-footer">
