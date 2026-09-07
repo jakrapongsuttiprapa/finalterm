@@ -174,6 +174,8 @@
     .class-icon-wrap{width:50px;height:50px;display:flex;align-items:center;justify-content:center;border:var(--border);border-radius:15px;font-size:25px;margin-bottom:11px;box-shadow:2px 2px 0 var(--black);transition:transform .14s,box-shadow .14s;}
     .class-name{font-weight:900;font-size:22px;line-height:1;margin-bottom:4px;letter-spacing:-.5px;}
     .class-plan{font-weight:500;font-size:11px;color:#666;}
+    .class-meta{font-weight:700;font-size:10.5px;color:var(--main-dark);line-height:1.5;margin-top:5px;min-height:16px;}
+    html.dark .class-meta{color:#F0B45C;}
     .class-card-bottom{padding:9px 16px;border-top:var(--border);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
     .plan-sci{background:linear-gradient(135deg,#e6f1ff,#d3e7ff);}.plan-art{background:linear-gradient(135deg,#f2e6ff,#e6d3ff);}.plan-lang{background:linear-gradient(135deg,#fff1da,#ffe7c4);}.plan-sport{background:linear-gradient(135deg,#ffe0e0,#ffcccc);}
     .icon-sci{background:linear-gradient(135deg,#d6e9ff,#b8d4ff);}.icon-art{background:linear-gradient(135deg,#ead6ff,#d4b8ff);}.icon-lang{background:linear-gradient(135deg,#ffefc6,#ffe0a4);}.icon-sport{background:linear-gradient(135deg,#ffd6d6,#ffb8b8);}
@@ -519,7 +521,10 @@
     @keyframes pulse-dot{0%,100%{transform:scale(1);}50%{transform:scale(1.3);}}
     .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--main);animation:pulse-dot 1.2s infinite;margin-right:4px;}
     .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;background:var(--white);border:var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);}
-    .empty-icon{font-size:48px;margin-bottom:12px;}.empty-text{font-weight:700;font-size:16px;color:#888;}
+        .empty-icon{font-size:52px;margin-bottom:14px;opacity:.85;filter:saturate(.85);}
+    .empty-text{font-weight:800;font-size:16px;color:#7a6a55;}
+    .empty-sub{font-weight:600;font-size:12.5px;color:#a08d74;margin-top:7px;line-height:1.6;}
+    html.dark .empty-text{color:#9a8a76;}html.dark .empty-sub{color:#7a6a58;}
     @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
     .skeleton{background:linear-gradient(90deg,#f0ede4 25%,#e4e1d8 50%,#f0ede4 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:8px;}
 
@@ -931,6 +936,13 @@
           <button onclick="unlockStudentDevice()" class="nb-btn nb-btn-yellow" style="width:100%;font-size:14px;padding:12px;">
             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8v3"/><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M12 15v3"/></svg><span data-i18n="btnUnlock">ปลดล็อกอุปกรณ์</span>
           </button>
+          <div id="unlock-session-box" style="display:none;margin-top:18px;border-top:2px dashed #dbd8d0;padding-top:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+              <label class="nb-label" style="margin-bottom:0;" data-i18n="sessTitle">สถานะการล็อกอินของห้องนี้</label>
+              <button onclick="unlockWholeClass()" class="nb-btn nb-btn-white" style="font-size:12px;padding:8px 14px;"><span data-i18n="btnUnlockClass">🔓 ปลดล็อกทั้งห้อง</span></button>
+            </div>
+            <div id="unlock-session-list" style="max-height:280px;overflow:auto;"></div>
+          </div>
         </div>
         <div class="nb-card" style="padding:28px;margin-top:20px;">
           <div class="section-eyebrow" style="margin-bottom:8px;"><span>📜</span> <span data-i18n="auditEyebrow">ประวัติการแก้ไขระบบ</span></div>
@@ -975,6 +987,7 @@ const classData=[
 ];
 
 let allAdminExams=[],currentStudentClass='',clockInterval=null;
+let classSummary={},classSummaryLoaded=false;   // {ห้อง:{total,next:{date,subject}}} ใช้แสดงบนการ์ดเลือกห้อง
 let currentScheduleExams=[],scheduleFilter='all',scheduleSearch='',scheduleViewMode='card';
 const scheduledNotifs={};
 let notifBannerShown=false;
@@ -1010,6 +1023,11 @@ cardPw:'รหัสผ่าน',cardLink:'🔗 ลิงก์ข้อสอ�
 addEyebrow:'เพิ่มรายวิชาสอบใหม่',fLevel:'ระดับชั้น',fExamPw:'รหัสผ่านวิชา',fSubject:'ชื่อวิชา',phSubject:'เช่น ภาษาอังกฤษพื้นฐาน',fTeacher:'รหัสวิชา / ครูผู้สอน',fExamDate:'วันที่สอบ',fStart:'เวลาเริ่มสอบ',fEnd:'เวลาสิ้นสุด',fLink:'ลิงก์ข้อสอบ',fImage:'🖼️ ลิงก์รูปพื้นหลังการ์ด (ไม่บังคับ)',imgHint:'แนะนำ 1200 x 400 px (.jpg/.webp ไม่เกิน ~500KB) — ระบบจะไล่สีเข้มทับเฉพาะ<b>ฝั่งซ้าย</b>ของรูปเพื่อให้อ่านตัวหนังสือง่าย ส่วน<b>ฝั่งขวาจะเห็นรูปชัดเต็มๆ</b> ดังนั้นควรวางจุดเด่น/ตัวละคร/ข้อความสำคัญของรูปไว้ทางขวา',btnSaveExam:'บันทึกวิชาสอบลงระบบ',
 incompleteText:'กรุณากรอกข้อมูลในช่องที่มีดอกจันสีแดง',saving:'กำลังบันทึก...',savedTitle:'บันทึกสำเร็จ! ✅',editTitle:'แก้ไขวิชาสอบ',btnSaveEdit:'บันทึกการแก้ไข',editIncomplete:'กรุณากรอกข้อมูลให้ครบทุกช่องที่มี *',editSaved:'แก้ไขสำเร็จ! ✅',notFoundExam:'ไม่พบข้อมูลวิชานี้',
 dupTitle:'📋 คัดลอกวิชานี้ไปห้องอื่น',dupSubject:'วิชา:',dupTarget:'เลือกห้องเรียนปลายทาง',btnDupGo:'📋 คัดลอกเลย',dupDoing:'กำลังคัดลอก...',dupDone:'คัดลอกไปยัง {c} สำเร็จ! ✅',
+dupFrom:'ต้นฉบับจาก',dupSelectAll:'เลือกทุกห้อง',dupHint:'ห้องต้นฉบับถูกปิดไว้ ห้องที่มีวิชานี้ในวันเดียวกันอยู่แล้วจะถูกข้ามให้อัตโนมัติ',dupWarnPick:'กรุณาเลือกอย่างน้อย 1 ห้องเรียน',dupDoneMulti:'คัดลอกไป {n} ห้องแล้ว ✅',dupNone:'ไม่ได้คัดลอกห้องไหนเลย',dupSkipped:'ข้ามไป: {c}',actDuplicate:'📋 คัดลอกวิชา',
+sessTitle:'สถานะการล็อกอินของห้องนี้',sessSummary:'🔒 ล็อกอินค้างอยู่ {n} คน จากทั้งหมด {total} คน',sessSince:'ตั้งแต่',sessFree:'ว่าง',
+btnUnlockClass:'🔓 ปลดล็อกทั้งห้อง',unlockClassConfirm:'ปลดล็อกทั้งห้อง?',unlockClassText:'นักเรียนห้อง {c} ทุกคนจะเข้าสู่ระบบใหม่จากเครื่องไหนก็ได้ ใช้ตอนเริ่มคาบสอบใหม่หรือเปลี่ยนห้องสอบ',unlockedClassOk:'ปลดล็อกแล้ว {n} คน ✅',
+cardSubjects:'📘 {n} วิชา',cardNext:'📅 ถัดไป',cardNoExam:'ยังไม่มีตารางสอบ',
+emptySubSched:'ถ้าคิดว่าน่าจะมีวิชาสอบแล้ว ลองกดรีเฟรชหน้า หรือสอบถามคุณครูประจำวิชา',emptySubSearch:'ลองลบคำค้นหาหรือล้างตัวกรองดูครับ',emptySubProctor:'เลือกห้องจากช่องด้านบน แล้วรหัสผ่านของทุกวิชาจะขึ้นมาให้ทันที',
 delConfirmTitle:'ยืนยันการลบ?',delText:'ต้องการลบวิชา <b>{s}</b> ใช่หรือไม่?',btnDelYes:'ใช่, ลบเลย',deleting:'กำลังลบ...',deleted:'ลบสำเร็จ!',
 unlockEyebrow:'ปลดล็อกอุปกรณ์นักเรียน',unlockDesc:'ระบบจำกัดให้ 1 ชื่อ ล็อกอินใช้งานได้ทีละ 1 เครื่องเท่านั้น (กันเพื่อนแอบเอารหัสไปเข้าซ้อน) โดยจะปลดล็อกอัตโนมัติให้เองถ้าไม่มีการใช้งานเกิน <b>8 ชั่วโมง</b> — ถ้านักเรียนเปลี่ยนเครื่อง/ล้างข้อมูลเบราว์เซอร์แล้วเข้าไม่ได้ก่อนครบเวลา ให้เลือกห้อง + ชื่อ แล้วกดปลดล็อกด่วนที่นี่ได้เลย',btnUnlock:'ปลดล็อกอุปกรณ์',warnUnlock:'กรุณาเลือกห้องเรียนและชื่อนักเรียน',unlocking:'กำลังปลดล็อก...',unlockedOk:'ปลดล็อกสำเร็จ! ✅',badExamLink:'ลิงก์ข้อสอบของวิชานี้ไม่ถูกต้อง กรุณาแจ้งคุณครู',
 imgEyebrow:'รูปแบนเนอร์ของระบบ',imgDesc:'วางลิงก์รูปแล้วกดบันทึก ระบบจะเปลี่ยนให้ทุกหน้าและทุกเครื่องทันที ไม่ต้องแก้ไฟล์เอง — อัปโหลดรูปที่ postimages.cc แล้วก๊อปลิงก์ที่ขึ้นต้นด้วย https:// มาวาง ถ้าเว้นว่างไว้ ระบบจะใช้พื้นหลังไล่สีน้ำตาลแทน',
@@ -1063,6 +1081,11 @@ cardPw:'Password',cardLink:'🔗 Exam link',btnEdit:'Edit',btnDup:'Duplicate',bt
 addEyebrow:'Add a new exam',fLevel:'Class',fExamPw:'Exam password',fSubject:'Subject',phSubject:'e.g. Fundamental English',fTeacher:'Course code / Teacher',fExamDate:'Exam date',fStart:'Start time',fEnd:'End time',fLink:'Exam link',fImage:'🖼️ Card background image URL (optional)',imgHint:'Recommended 1200 x 400 px (.jpg/.webp, under ~500KB) — a dark gradient covers only the <b>left side</b> for text readability, the <b>right side shows the image clearly</b>, so place the key part of your image on the right',btnSaveExam:'Save exam',
 incompleteText:'Please fill in all required fields marked with *',saving:'Saving...',savedTitle:'Saved! ✅',editTitle:'Edit Exam',btnSaveEdit:'Save changes',editIncomplete:'Please fill in every field marked with *',editSaved:'Changes saved! ✅',notFoundExam:'Exam not found',
 dupTitle:'📋 Duplicate to another class',dupSubject:'Subject:',dupTarget:'Target classroom',btnDupGo:'📋 Duplicate',dupDoing:'Duplicating...',dupDone:'Duplicated to {c}! ✅',
+dupFrom:'Copied from',dupSelectAll:'Select all classes',dupHint:'The source class is disabled. Classes that already have this subject on the same date are skipped automatically.',dupWarnPick:'Please select at least 1 classroom',dupDoneMulti:'Duplicated to {n} class(es) ✅',dupNone:'No classes were duplicated',dupSkipped:'Skipped: {c}',actDuplicate:'📋 Duplicated exam',
+sessTitle:'Login status for this class',sessSummary:'🔒 {n} of {total} students are currently locked in',sessSince:'since',sessFree:'free',
+btnUnlockClass:'🔓 Unlock whole class',unlockClassConfirm:'Unlock the whole class?',unlockClassText:'Every student in {c} will be able to log in again from any device. Use this at the start of a new exam session or when changing rooms.',unlockedClassOk:'Unlocked {n} student(s) ✅',
+cardSubjects:'📘 {n} subjects',cardNext:'📅 Next',cardNoExam:'No exams scheduled yet',
+emptySubSched:'If you expected exams here, try refreshing the page or ask your subject teacher.',emptySubSearch:'Try clearing your search or filters.',emptySubProctor:'Pick a class above and every exam password will appear instantly.',
 delConfirmTitle:'Confirm delete?',delText:'Delete <b>{s}</b>?',btnDelYes:'Yes, delete',deleting:'Deleting...',deleted:'Deleted!',
 unlockEyebrow:'Unlock a student device',unlockDesc:'Each name can be logged in on only 1 device at a time (prevents password sharing). Sessions auto-expire after <b>8 hours</b> of inactivity — if a student switches devices and gets locked out sooner, select their class + name here and unlock instantly.',btnUnlock:'Unlock device',warnUnlock:'Please select the classroom and student name',unlocking:'Unlocking...',unlockedOk:'Unlocked! ✅',badExamLink:'The exam link for this subject is invalid — please tell your teacher',
 imgEyebrow:'Portal banner images',imgDesc:'Paste an image URL and save — it updates every page on every device instantly, no file editing needed. Upload to postimages.cc and copy the https:// link. Leave blank to use the brown gradient background.',
@@ -1325,7 +1348,7 @@ function initApp(){
       // ต้องคืนสภาพให้เหมือนกดปุ่มย้อนกลับในหน้าเว็บ ไม่งั้นแบนเนอร์จะหายและตัวจับเวลายังวิ่งอยู่
       stopScheduleAutoRefresh();stopAnnouncePolling();
       hide('schedule-view');show('landing-view');show('hero-wrap');
-      renderQuickAccess();window.scrollTo(0,0);
+      renderQuickAccess();loadClassSummary();window.scrollTo(0,0);
     }
   });
 }
@@ -1500,7 +1523,7 @@ function buildProctorCardHTML(ex,ci){
 function renderProctorExams(){
   const grid=document.getElementById('proctor-grid');if(!grid)return;
   const cls=document.getElementById('proctor-class').value;
-  if(!cls){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🗝️</div><div class="empty-text">${t('proctorPickHint')}</div></div>`;return;}
+  if(!cls){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🗝️</div><div class="empty-text">${t('proctorPickHint')}</div><div class="empty-sub">${t('emptySubProctor')}</div></div>`;return;}
   const exams=currentProctorExams;
   if(!exams.length){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${t('emptyNone')}</div></div>`;return;}
   if(proctorViewMode==='table'){renderProctorTable(exams);return;}
@@ -1843,6 +1866,7 @@ function renderLandingCards(){
         <div class="class-icon-wrap ${cd.icon_cls}">${cd.icon}</div>
         <div class="class-name ${cd.text_cls}">${cd.cls}</div>
         <div class="class-plan">${planName(cd)}</div>
+        <div class="class-meta">${classMetaHtml(cd.cls)}</div>
       </div>
       <div class="class-card-bottom ${cd.plan_cls}">
         <span class="${cd.text_cls}" style="font-size:10px;">${t('planShort')}${planName(cd)}</span>
@@ -1850,6 +1874,23 @@ function renderLandingCards(){
       </div>
     </button>`).join('');
 }
+function classMetaHtml(cls){
+  // ยังโหลดไม่เสร็จ ต้องไม่รีบบอกว่า "ยังไม่มีตารางสอบ" เพราะอาจมีอยู่จริง
+  // ขึ้นจุดไข่ปลาจางๆ ไว้ก่อน แล้วค่อยแทนที่เมื่อข้อมูลมาถึง
+  if(!classSummaryLoaded)return '<span style="opacity:.35;">···</span>';
+  const s=classSummary[cls];
+  if(!s||!s.total)return `<span style="opacity:.55;">${t('cardNoExam')}</span>`;
+  const nx=s.next?`<br><span style="opacity:.75;">${t('cardNext')} ${formatDate(s.next.date)}</span>`:'';
+  return `${tf('cardSubjects',{n:s.total})}${nx}`;
+}
+function loadClassSummary(){
+  callAPI('getClassSummary').then(function(res){
+    if(!res||!res.success)return;
+    classSummary=res.summary||{};classSummaryLoaded=true;
+    if(document.getElementById('landing-view').style.display!=='none')renderLandingCards();
+  }).catch(function(){});
+}
+
 /* ── SCHEDULE ── */
 function openSchedule(className,planLabel){
   currentStudentClass=className;
@@ -1894,7 +1935,7 @@ function backToLanding(){
   if(previewReturn){closeStudentPreview();return;}
   hide('schedule-view');show('landing-view');show('hero-wrap');window.scrollTo(0,0);
   try{history.pushState({},'',window.location.pathname);}catch(e){}
-  renderQuickAccess();
+  renderQuickAccess();loadClassSummary();
 }
 
 function buildExamCardHTML(exam,ci){
@@ -1958,7 +1999,15 @@ function applyScheduleView(){
     const total=currentScheduleExams.length;
     let done=0,wait=0,act=0;
     currentScheduleExams.forEach(function(ex){const c=checkExamStatus(ex.date,ex.time).code;if(c==='passed')done++;else if(c==='active')act++;else if(c==='waiting')wait++;});
-    sumEl.innerHTML=`📚 ${t('sumTotal')} ${total} ${t('sumUnit')} &nbsp;•&nbsp; <span style="color:var(--main-dark)">🔴 ${t('sumLive')} ${act}</span> &nbsp;•&nbsp; <span style="color:#92400e">⏳ ${t('sumUpcoming')} ${wait}</span> &nbsp;•&nbsp; <span style="color:#6b7280">✅ ${t('sumDone')} ${done}</span>`;
+    const pct=total?Math.round(done/total*100):0;
+    // ไม่มีวิชาสอบก็ไม่ต้องมีแถบความคืบหน้า 0% ให้รก
+    sumEl.innerHTML=(total?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+        <div style="flex:1;height:9px;background:#e6dfd2;border:1.5px solid var(--black);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--main),var(--main-dark));transition:width .5s ease;"></div>
+        </div>
+        <span style="font-size:12px;font-weight:900;color:var(--main-dark);white-space:nowrap;">${pct}%</span>
+      </div>`:'')+
+      `📚 ${t('sumTotal')} ${total} ${t('sumUnit')} &nbsp;•&nbsp; <span style="color:var(--main-dark)">🔴 ${t('sumLive')} ${act}</span> &nbsp;•&nbsp; <span style="color:#92400e">⏳ ${t('sumUpcoming')} ${wait}</span> &nbsp;•&nbsp; <span style="color:#6b7280">✅ ${t('sumDone')} ${done}</span>`;
   }
 }
 
@@ -1980,7 +2029,7 @@ function renderScheduleTable(exams,todayISO){
   const grid=document.getElementById('exam-grid');
   if(!exams||!exams.length){
     const msg=scheduleSearch||scheduleFilter!=='all'?t('emptyFiltered'):t('emptyNone');
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div></div>`;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div><div class="empty-sub">${t('emptySubSched')}</div></div>`;
     return;
   }
   const list=exams.slice().sort(function(a,b){return (a.date+' '+a.time).localeCompare(b.date+' '+b.time);});
@@ -2087,7 +2136,7 @@ function renderTimeline(exams,todayISO){
   const grid=document.getElementById('exam-grid');
   if(!exams||!exams.length){
     const msg=scheduleSearch||scheduleFilter!=='all'?t('emptyFiltered'):t('emptyNone');
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div></div>`;return;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div><div class="empty-sub">${t('emptySubSched')}</div></div>`;return;
   }
   // group by date
   const byDate={};
@@ -2127,7 +2176,7 @@ function renderScheduleGrid(exams,todayISO){
   const grid=document.getElementById('exam-grid');
   if(!exams||!exams.length){
     const msg=scheduleSearch||scheduleFilter!=='all'?t('emptyFiltered'):t('emptyNone');
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div></div>`;return;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div><div class="empty-sub">${t('emptySubSched')}</div></div>`;return;
   }
   const tod=exams.filter(e=>e.date===todayISO),oth=exams.filter(e=>e.date!==todayISO);
   let html='',ci=0;
@@ -2205,10 +2254,44 @@ function switchAdminTab(tab){
   mL.style.cssText=_mcss;mA.style.cssText=_mcss;mN.style.cssText=_mcss;mS.style.cssText=_mcss;
   if(tab==='list')loadAdminData();
   if(tab==='announce'){buildAnnounceClassGrid();loadAnnouncementsAdminList();}
-  if(tab==='settings')loadPortalImageSettings();
+  if(tab==='settings'){loadPortalImageSettings();loadClassSessions();}
 }
 
+function loadClassSessions(){
+  const cls=document.getElementById('unlock-class').value;
+  const box=document.getElementById('unlock-session-box'),list=document.getElementById('unlock-session-list');
+  if(!box||!list)return;
+  if(!cls){box.style.display='none';return;}
+  box.style.display='';list.innerHTML=`<div style="font-size:12px;color:#888;padding:6px;">${t('loadingShort')}</div>`;
+  callAPI('getClassSessions',{password:currentSession?currentSession.password:'',className:cls}).then(function(res){
+    if(!res||!res.success){list.innerHTML=`<div style="color:#c0392b;font-size:12px;padding:6px;">${(res&&res.message)||t('errTitle')}</div>`;return;}
+    if(!res.students.length){list.innerHTML=`<div style="font-size:12px;color:#888;padding:6px;">${t('optNoNames')}</div>`;return;}
+    list.innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:8px;">${tf('sessSummary',{n:res.lockedCount,total:res.students.length})}</div>`+
+      res.students.map(function(s){
+        const tm=s.ts?(function(){const dd=new Date(s.ts);return isNaN(dd.getTime())?'':dd.toLocaleTimeString(uiLang==='en'?'en-GB':'th-TH',{hour:'2-digit',minute:'2-digit'});})():'';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;margin-bottom:5px;background:${s.locked?'#FBEBD2':'#f5f3ee'};">
+          <span style="font-size:13px;font-weight:700;">${s.locked?'🔒':'⬜'} ${escHtml(s.label)}</span>
+          <span style="font-size:11px;font-weight:700;color:${s.locked?'#7A4A0F':'#999'};white-space:nowrap;">${s.locked?(t('sessSince')+' '+tm):t('sessFree')}</span>
+        </div>`;
+      }).join('');
+  }).catch(function(){list.innerHTML=`<div style="color:#c0392b;font-size:12px;padding:6px;">${t('serverErr')}</div>`;});
+}
+function unlockWholeClass(){
+  const cls=document.getElementById('unlock-class').value;
+  if(!cls){Swal.fire(t('warnTitle'),t('warnUnlock'),'warning');return;}
+  Swal.fire({title:t('unlockClassConfirm'),html:`<p style="font-size:13px;font-weight:700;color:#555;">${tf('unlockClassText',{c:cls})}</p>`,
+    icon:'question',showCancelButton:true,confirmButtonText:t('btnUnlockClass'),cancelButtonText:t('btnCancel'),confirmButtonColor:'#8A5A12'})
+  .then(function(r){
+    if(!r.isConfirmed)return;
+    Swal.fire({title:t('unlocking'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    callAPI('releaseClassDevices',{password:currentSession?currentSession.password:'',className:cls}).then(function(res){
+      if(res.success){Swal.fire({icon:'success',title:tf('unlockedClassOk',{n:res.count}),timer:2000,showConfirmButton:false});loadClassSessions();}
+      else Swal.fire(t('errTitle'),res.message,'error');
+    }).catch(handleScriptError);
+  });
+}
 function onUnlockClassChange(){
+  loadClassSessions();
   const cls=document.getElementById('unlock-class').value;
   const nameSel=document.getElementById('unlock-name');
   nameSel.disabled=true;nameSel.innerHTML='<option value="">'+t('optLoadingNames')+'</option>';
@@ -2227,7 +2310,7 @@ function unlockStudentDevice(){
   if(!token){Swal.fire(t('warnTitle'),t('warnUnlock'),'warning');return;}
   Swal.fire({title:t('unlocking'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
   callAPI('releaseStudentDeviceByAdmin',{password:currentSession?currentSession.password:'',studentToken:token}).then(function(res){
-    if(res.success){Swal.fire({icon:'success',title:t('unlockedOk'),text:res.message,timer:2000,showConfirmButton:false});}
+    if(res.success){Swal.fire({icon:'success',title:t('unlockedOk'),text:res.message,timer:2000,showConfirmButton:false});loadClassSessions();}
     else{Swal.fire(t('errTitle'),res.message,'error');}
   }).catch(handleScriptError);
 }
@@ -2303,7 +2386,7 @@ function clearPortalImages(){
 }
 
 /* ── AUDIT LOG ── */
-const AUDIT_ACTION_KEYS={add:'actAdd',edit:'actEdit',delete:'actDelete',broadcast:'actBroadcast',unlock:'actUnlock',settings:'actSettings',announce:'actAnnounce',delete_announce:'actDeleteAnnounce',makeup:'actMakeup'};
+const AUDIT_ACTION_KEYS={add:'actAdd',edit:'actEdit',delete:'actDelete',broadcast:'actBroadcast',unlock:'actUnlock',duplicate:'actDuplicate',settings:'actSettings',announce:'actAnnounce',delete_announce:'actDeleteAnnounce',makeup:'actMakeup'};
 function viewAuditLog(){
   Swal.fire({
     title:t('auditTitle'),width:Math.min(560,window.innerWidth-24),
@@ -2483,7 +2566,7 @@ function renderAdminStats(exams){
 /* ── ADMIN GRID ── */
 function renderAdminGrid(exams){
   const grid=document.getElementById('admin-grid');
-  if(!exams.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">'+t('emptySearch')+'</div></div>';return;}
+  if(!exams.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">'+t('emptySearch')+'</div><div class="empty-sub">'+t('emptySubSearch')+'</div></div>';return;}
   grid.innerHTML=exams.map(function(exam,i){
     const s=checkExamStatus(exam.date,exam.time),strip=STRIP_COLORS[i%STRIP_COLORS.length];
     const pw=jsAttr(exam.password);
@@ -2520,22 +2603,46 @@ function renderAdminGrid(exams){
   }).join('');
 }
 
-/* ── DUPLICATE EXAM ── */
+/* ── DUPLICATE EXAM (เลือกได้หลายห้องพร้อมกัน) ── */
+function toggleDupSelectAll(checked){
+  document.querySelectorAll('.dup-chk:not(:disabled)').forEach(function(c){c.checked=checked;});
+}
 function duplicateExam(row){
   const exam=allAdminExams.find(e=>e.row===row);
   if(!exam){Swal.fire(t('errTitle'),t('notFoundExam'),'error');return;}
-  const opts=classData.map(cd=>`<option value="${cd.cls}">${cd.cls} (${planName(cd)})</option>`).join('');
-  Swal.fire({title:t('dupTitle'),
-    html:`<p style="font-weight:700;color:#555;margin-bottom:14px;">${t('dupSubject')} <b>${escHtml(exam.subject)}</b></p><label style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;color:#1a1a2e;">${t('dupTarget')}</label><select id="dup-target" style="width:100%;font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;padding:9px 10px;border:2px solid #1a1a2e;border-radius:10px;background:#fff;cursor:pointer;">${opts}</select>`,
-    confirmButtonText:t('btnDupGo'),confirmButtonColor:'#3B6FE0',showCancelButton:true,cancelButtonText:t('btnCancel'),
-    preConfirm:function(){return document.getElementById('dup-target').value;}
-  }).then(function(r){
-    if(r.isConfirmed&&r.value){
-      Swal.fire({title:t('dupDoing'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-      const tp=exam.time.split('-');
-      callAPI('addNewExam',{password:currentSession?currentSession.password:'',data:{className:r.value,password:exam.password,subject:exam.subject,teacher:exam.teacher,date:exam.date,startTime:tp[0].trim(),endTime:tp[1].trim(),link:exam.link,image:exam.image||''}})
-      .then(function(res){if(res.success){Swal.fire({icon:'success',title:tf('dupDone',{c:r.value}),timer:1800,showConfirmButton:false});loadAdminData();}else Swal.fire(t('errTitle'),res.message,'error');}).catch(handleScriptError);
+  const boxes=classData.map(function(cd){
+    const src=cd.cls===exam.className;
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:${src?'#eceae4':'#f5f3ee'};border:1.5px solid #dbd8d0;border-radius:10px;padding:8px 10px;cursor:${src?'not-allowed':'pointer'};opacity:${src?'.45':'1'};">
+      <input type="checkbox" class="dup-chk" value="${encAttr(cd.cls)}" ${src?'disabled':''}> ${cd.cls}
+    </label>`;
+  }).join('');
+  Swal.fire({title:t('dupTitle'),width:Math.min(560,window.innerWidth-24),
+    html:`<p style="font-weight:700;color:#555;font-size:13px;margin-bottom:4px;">${t('dupSubject')} <b>${escHtml(exam.subject)}</b></p>
+      <p style="font-size:12px;color:#888;font-weight:600;margin-bottom:12px;">${t('dupFrom')} ${escHtml(exam.className)} · ${formatDate(exam.date)} · ${escHtml(exam.time)}</p>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;cursor:pointer;justify-content:flex-start;margin-bottom:8px;">
+        <input type="checkbox" onchange="toggleDupSelectAll(this.checked)"> ${t('dupSelectAll')}
+      </label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">${boxes}</div>
+      <div style="font-size:11px;color:#888;font-weight:600;margin-top:10px;text-align:left;">${t('dupHint')}</div>`,
+    confirmButtonText:t('btnDupGo'),confirmButtonColor:'#3B6FE0',showCancelButton:true,cancelButtonText:t('btnCancel'),focusConfirm:false,
+    preConfirm:function(){
+      const picked=Array.from(document.querySelectorAll('.dup-chk:checked')).map(function(c){return c.value;});
+      if(!picked.length){Swal.showValidationMessage(t('dupWarnPick'));return false;}
+      return picked;
     }
+  }).then(function(r){
+    if(!r.isConfirmed||!r.value)return;
+    Swal.fire({title:t('dupDoing'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    callAPI('duplicateExamToClasses',{password:currentSession?currentSession.password:'',row:exam.row,classes:r.value})
+    .then(function(res){
+      if(!res.success){Swal.fire(t('errTitle'),res.message,'error');return;}
+      const skip=res.skipped&&res.skipped.length?`<div style="font-size:12px;color:#888;font-weight:600;margin-top:8px;">${tf('dupSkipped',{c:res.skipped.join(', ')})}</div>`:'';
+      Swal.fire({icon:res.added.length?'success':'info',
+        title:res.added.length?tf('dupDoneMulti',{n:res.added.length}):t('dupNone'),
+        html:`<div style="font-size:13px;font-weight:700;color:#555;">${res.added.join(', ')||'—'}</div>${skip}`,
+        confirmButtonColor:'#8A5A12'});
+      loadAdminData();
+    }).catch(handleScriptError);
   });
 }
 
