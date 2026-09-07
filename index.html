@@ -949,7 +949,7 @@
    -> กด Deploy แล้วก๊อป "Web app URL" มาวางแทนข้อความด้านล่าง
    ⚠️ ห้ามใช้ URL ของระบบปลายภาค ไม่งั้นข้อมูลจะไปปนกัน
    ═══════════════════════════════════════════════════════════════ */
-const API_URL='PASTE_FINAL_EXAM_WEB_APP_URL_HERE';
+const API_URL='https://script.google.com/macros/s/AKfycbzi5zipyRAP4sfW9JPghV6tvH2C89jYbAa6owcZGyqdQj6tu3LeoMCuivtgcJ6LL72Obw/exec';
 async function callAPI(action,payload={}){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})});if(!res.ok)throw new Error('เครือข่ายผิดพลาด (HTTP '+res.status+')');return res.json();}
 
 const planPatterns={
