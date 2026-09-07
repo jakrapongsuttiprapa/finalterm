@@ -10,9 +10,12 @@
   <script>(function(){try{var d=document.documentElement,th=localStorage.getItem('uiTheme');
   if(th==='neon'){d.classList.add('neon','dark');}
   else{if(th&&th!=='neo')d.classList.add(th);if(localStorage.getItem('darkMode')==='1')d.classList.add('dark');}
-  var R=/^https:\/\/[^\s'"()\\<>]+$/,ih=localStorage.getItem('imgHero'),il=localStorage.getItem('imgLogin');
-  if(ih&&R.test(ih))d.style.setProperty('--img-hero',"url('"+ih+"')");
-  if(il&&R.test(il))d.style.setProperty('--img-login',"url('"+il+"')");
+  var R=/^https:\/\/[^\s'"()\\<>]+$/;
+  [['imgHero','--img-hero'],['imgLogin','--img-login'],['imgMobile','--img-mobile']].forEach(function(p){
+    var v=localStorage.getItem(p[0]);
+    if(p[0]==='imgMobile'&&!v)v=localStorage.getItem('imgLogin');  // ไม่ได้ตั้งรูปมือถือ ใช้รูป login แทน
+    if(v&&R.test(v))d.style.setProperty(p[1],"url('"+v+"')");
+  });
   }catch(e){}})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,8 +26,11 @@
        🖼️  ใส่รูปของระบบสอบปลายภาคตรงนี้ (แก้แค่ 2 บรรทัดนี้พอ)
        --img-hero  = แบนเนอร์ยาวด้านบน + พื้นหลังหัวหน้าตาราง/ผู้คุมสอบ/แอดมิน
                      แนะนำขนาด 2400 x 800 px (แนวนอน)
-       --img-login = รูปฝั่งซ้ายของหน้าเข้าสู่ระบบ + พื้นหลังแบนเนอร์บนมือถือ
-                     แนะนำขนาด 1200 x 1400 px (แนวตั้ง)
+       --img-login = รูปฝั่งซ้ายของหน้าเข้าสู่ระบบ (เห็นเฉพาะจอกว้างกว่า 820px)
+                     แนะนำขนาด 1200 x 1300 px (แนวตั้ง)
+       --img-mobile = แบนเนอร์บนมือถือ/แท็บเล็ต (จอแคบกว่า 768px)
+                     แนะนำขนาด 1440 x 900 px (อัตราส่วน 16:10)
+                     ถ้าไม่ใส่ ระบบจะใช้ --img-login แทนให้
        ⭐ วิธีที่ง่ายที่สุด: เข้าหน้าแอดมิน -> แท็บ "ตั้งค่าระบบ" -> หัวข้อ "รูปแบนเนอร์ของระบบ"
           วางลิงก์แล้วกดบันทึก ระบบจะเก็บลงชีท Settings และทับค่าด้านล่างนี้ให้เอง
        (ถ้าอยากตั้งค่าเริ่มต้นแบบตายตัวก็แก้ตรงนี้ได้: เปลี่ยน none เป็น url('https://...'))
@@ -34,6 +40,7 @@
     :root{
       --img-hero:none;
       --img-login:none;
+      --img-mobile:none;
       --hero-fallback:linear-gradient(135deg,#8A5A12 0%,#3A2408 55%,#16213e 100%);
       --login-fallback:linear-gradient(150deg,#7A5210 0%,#241703 100%);
     }
@@ -560,8 +567,11 @@
       .exam-grid{grid-template-columns:1fr;}.admin-body{padding:14px;}.filter-bar{flex-direction:column;align-items:stretch;}.filter-bar>*{width:100%;min-width:0;}.filter-bar .clear-btn{width:100%;align-self:stretch;}.nb-btn{font-size:13px;padding:9px 16px;}
       .hero-wrap{padding:10px 10px 0;}#hero-section{border-radius:18px;box-shadow:5px 5px 0 var(--black);}
       .hero-img-desktop,.hero-overlay,.hero-logo-row,.hero-badge-corner,.hero-clock-desktop{display:none!important;}
+      /* หัวหน้าจอบนมือถือถูกทับด้วยสีทึบ 86-100% อยู่แล้ว แทบไม่เห็นรูป
+         แต่เบราว์เซอร์ยังต้องโหลดไฟล์แบนเนอร์ 2400px มาทั้งไฟล์ ตัดออกเพื่อประหยัดเน็ตนักเรียน */
+      .schedule-header,.proctor-header{background-image:none!important;}
       #hero-section{background:linear-gradient(135deg,#16213e 0%,#5C3E10 55%,#8A5A12 100%);}
-      .hero-text-mobile{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:34px 20px 30px;overflow:hidden;min-height:230px;background-image:var(--img-login),var(--hero-fallback);background-size:cover;background-position:center;}
+      .hero-text-mobile{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:34px 20px 30px;overflow:hidden;min-height:230px;aspect-ratio:16/10;background-image:var(--img-mobile),var(--hero-fallback);background-size:cover;background-position:center 30%;}
 
       #admin-stats-bar{grid-template-columns:repeat(2,1fr)!important;}
     }
@@ -895,10 +905,16 @@
             <input type="url" id="set-img-hero" class="nb-input" oninput="previewPortalImage('hero')" placeholder="https://i.postimg.cc/...">
             <div class="img-preview" id="prev-img-hero"></div>
           </div>
-          <div style="margin-bottom:18px;">
-            <label class="nb-label" data-i18n="imgLoginLabel">รูปหน้าเข้าสู่ระบบ — แนะนำ 1200 x 1300 px</label>
+          <div style="margin-bottom:16px;">
+            <label class="nb-label" data-i18n="imgLoginLabel">รูปหน้าเข้าสู่ระบบ (จอคอม) — แนะนำ 1200 x 1300 px</label>
             <input type="url" id="set-img-login" class="nb-input" oninput="previewPortalImage('login')" placeholder="https://i.postimg.cc/...">
             <div class="img-preview" id="prev-img-login"></div>
+          </div>
+          <div style="margin-bottom:18px;">
+            <label class="nb-label" data-i18n="imgMobileLabel">แบนเนอร์บนมือถือ — แนะนำ 1440 x 900 px (16:10)</label>
+            <input type="url" id="set-img-mobile" class="nb-input" oninput="previewPortalImage('mobile')" placeholder="https://i.postimg.cc/...">
+            <div class="img-preview" id="prev-img-mobile"></div>
+            <div style="font-size:11px;color:#888;font-weight:600;margin-top:5px;" data-i18n="imgMobileHint">ถ้าเว้นว่างไว้ ระบบจะใช้รูปหน้าเข้าสู่ระบบแทน แต่รูปแนวตั้งจะถูกครอปบน-ล่าง แนะนำให้ใส่รูปแนวนอนแยกไว้จะสวยกว่า</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="savePortalImages()" class="nb-btn nb-btn-main" style="flex:1;min-width:180px;font-size:14px;padding:12px;"><span data-i18n="btnSaveImages">💾 บันทึกรูป</span></button>
@@ -933,7 +949,7 @@
    -> กด Deploy แล้วก๊อป "Web app URL" มาวางแทนข้อความด้านล่าง
    ⚠️ ห้ามใช้ URL ของระบบปลายภาค ไม่งั้นข้อมูลจะไปปนกัน
    ═══════════════════════════════════════════════════════════════ */
-const API_URL='https://script.google.com/macros/s/AKfycbzi5zipyRAP4sfW9JPghV6tvH2C89jYbAa6owcZGyqdQj6tu3LeoMCuivtgcJ6LL72Obw/exec';
+const API_URL='PASTE_FINAL_EXAM_WEB_APP_URL_HERE';
 async function callAPI(action,payload={}){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})});if(!res.ok)throw new Error('เครือข่ายผิดพลาด (HTTP '+res.status+')');return res.json();}
 
 const planPatterns={
@@ -997,7 +1013,8 @@ dupTitle:'📋 คัดลอกวิชานี้ไปห้องอื�
 delConfirmTitle:'ยืนยันการลบ?',delText:'ต้องการลบวิชา <b>{s}</b> ใช่หรือไม่?',btnDelYes:'ใช่, ลบเลย',deleting:'กำลังลบ...',deleted:'ลบสำเร็จ!',
 unlockEyebrow:'ปลดล็อกอุปกรณ์นักเรียน',unlockDesc:'ระบบจำกัดให้ 1 ชื่อ ล็อกอินใช้งานได้ทีละ 1 เครื่องเท่านั้น (กันเพื่อนแอบเอารหัสไปเข้าซ้อน) โดยจะปลดล็อกอัตโนมัติให้เองถ้าไม่มีการใช้งานเกิน <b>8 ชั่วโมง</b> — ถ้านักเรียนเปลี่ยนเครื่อง/ล้างข้อมูลเบราว์เซอร์แล้วเข้าไม่ได้ก่อนครบเวลา ให้เลือกห้อง + ชื่อ แล้วกดปลดล็อกด่วนที่นี่ได้เลย',btnUnlock:'ปลดล็อกอุปกรณ์',warnUnlock:'กรุณาเลือกห้องเรียนและชื่อนักเรียน',unlocking:'กำลังปลดล็อก...',unlockedOk:'ปลดล็อกสำเร็จ! ✅',badExamLink:'ลิงก์ข้อสอบของวิชานี้ไม่ถูกต้อง กรุณาแจ้งคุณครู',
 imgEyebrow:'รูปแบนเนอร์ของระบบ',imgDesc:'วางลิงก์รูปแล้วกดบันทึก ระบบจะเปลี่ยนให้ทุกหน้าและทุกเครื่องทันที ไม่ต้องแก้ไฟล์เอง — อัปโหลดรูปที่ postimages.cc แล้วก๊อปลิงก์ที่ขึ้นต้นด้วย https:// มาวาง ถ้าเว้นว่างไว้ ระบบจะใช้พื้นหลังไล่สีน้ำตาลแทน',
-imgHeroLabel:'แบนเนอร์ด้านบน — แนะนำ 2400 x 820 px',imgLoginLabel:'รูปหน้าเข้าสู่ระบบ — แนะนำ 1200 x 1300 px',
+imgHeroLabel:'แบนเนอร์ด้านบน (จอคอม) — แนะนำ 2400 x 820 px',imgLoginLabel:'รูปหน้าเข้าสู่ระบบ (จอคอม) — แนะนำ 1200 x 1300 px',
+imgMobileLabel:'แบนเนอร์บนมือถือ — แนะนำ 1440 x 900 px (16:10)',imgMobileHint:'ถ้าเว้นว่างไว้ ระบบจะใช้รูปหน้าเข้าสู่ระบบแทน แต่รูปแนวตั้งจะถูกครอปบน-ล่าง แนะนำให้ใส่รูปแนวนอนแยกไว้จะสวยกว่า',
 btnSaveImages:'💾 บันทึกรูป',btnClearImages:'ล้างรูป',imgSaved:'บันทึกรูปเรียบร้อยแล้ว ✅',
 imgInvalid:'ลิงก์ต้องขึ้นต้นด้วย https:// และห้ามมีช่องว่าง',imgPreviewFail:'โหลดรูปจากลิงก์นี้ไม่ได้ ลองตรวจลิงก์อีกครั้ง',actSettings:'🖼️ แก้ไขรูปแบนเนอร์',
 logoutQ:'ออกจากระบบ?',btnLogoutYes:'ออกจากระบบ',sessionExpired:'เซสชันหมดอายุ',noData:'ไม่มีข้อมูล',noExportRows:'ไม่มีรายการให้ส่งออกตามเงื่อนไขปัจจุบัน',exported:'ส่งออก {n} วิชาสำเร็จ ✅',csvName:'ตารางสอบปลายภาค',
@@ -1049,7 +1066,8 @@ dupTitle:'📋 Duplicate to another class',dupSubject:'Subject:',dupTarget:'Targ
 delConfirmTitle:'Confirm delete?',delText:'Delete <b>{s}</b>?',btnDelYes:'Yes, delete',deleting:'Deleting...',deleted:'Deleted!',
 unlockEyebrow:'Unlock a student device',unlockDesc:'Each name can be logged in on only 1 device at a time (prevents password sharing). Sessions auto-expire after <b>8 hours</b> of inactivity — if a student switches devices and gets locked out sooner, select their class + name here and unlock instantly.',btnUnlock:'Unlock device',warnUnlock:'Please select the classroom and student name',unlocking:'Unlocking...',unlockedOk:'Unlocked! ✅',badExamLink:'The exam link for this subject is invalid — please tell your teacher',
 imgEyebrow:'Portal banner images',imgDesc:'Paste an image URL and save — it updates every page on every device instantly, no file editing needed. Upload to postimages.cc and copy the https:// link. Leave blank to use the brown gradient background.',
-imgHeroLabel:'Top banner — recommended 2400 x 820 px',imgLoginLabel:'Login page image — recommended 1200 x 1300 px',
+imgHeroLabel:'Top banner (desktop) — recommended 2400 x 820 px',imgLoginLabel:'Login page image (desktop) — recommended 1200 x 1300 px',
+imgMobileLabel:'Mobile banner — recommended 1440 x 900 px (16:10)',imgMobileHint:'If left blank the login image is used instead, but a portrait image gets cropped top and bottom — a separate landscape image looks much better.',
 btnSaveImages:'💾 Save images',btnClearImages:'Clear',imgSaved:'Images saved ✅',
 imgInvalid:'Link must start with https:// and contain no spaces',imgPreviewFail:'Could not load this image — please check the link',actSettings:'🖼️ Changed banner images',
 logoutQ:'Log out?',btnLogoutYes:'Log out',sessionExpired:'Session expired',noData:'No data',noExportRows:'No rows to export with the current filters',exported:'Exported {n} exams ✅',csvName:'Final_Exam_Schedule',
@@ -2217,19 +2235,23 @@ function unlockStudentDevice(){
 /* ── รูปแบนเนอร์ของระบบ (ตั้งค่าจากหน้าแอดมิน เก็บในชีท Settings) ── */
 // อนุญาตเฉพาะ https และห้ามมีอักขระที่งัด CSS url() ออกได้
 const IMG_URL_RE=/^https:\/\/[^\s'"()\\<>]+$/;
-function applyPortalImages(hero,login){
+const PORTAL_IMG_KEYS=[['imgHero','--img-hero'],['imgLogin','--img-login'],['imgMobile','--img-mobile']];
+function applyPortalImages(s){
+  s=s||{};
   const d=document.documentElement;
-  d.style.setProperty('--img-hero',IMG_URL_RE.test(hero||'')?`url('${hero}')`:'none');
-  d.style.setProperty('--img-login',IMG_URL_RE.test(login||'')?`url('${login}')`:'none');
-  // เก็บไว้ในเครื่องด้วย เพื่อให้รอบหน้ารูปขึ้นทันทีตั้งแต่ก่อนวาดหน้าจอ ไม่ต้องรอเรียก API
-  try{
-    hero?localStorage.setItem('imgHero',hero):localStorage.removeItem('imgHero');
-    login?localStorage.setItem('imgLogin',login):localStorage.removeItem('imgLogin');
-  }catch(e){}
+  PORTAL_IMG_KEYS.forEach(function(p){
+    const v=(s[p[0]]||'').trim();
+    // ถ้าไม่ได้ตั้งรูปมือถือ ให้ใช้รูปหน้า login แทน — เลือกไว้ที่ตัวแปรเดียว
+    // ถ้าไปซ้อนสองชั้นใน CSS เบราว์เซอร์จะโหลดรูปที่มองไม่เห็นมาเปล่าๆ เปลืองเน็ตนักเรียน
+    const eff=(p[0]==='imgMobile'&&!v)?(s.imgLogin||'').trim():v;
+    d.style.setProperty(p[1],IMG_URL_RE.test(eff)?`url('${eff}')`:'none');
+    // เก็บไว้ในเครื่องด้วย เพื่อให้รอบหน้ารูปขึ้นทันทีตั้งแต่ก่อนวาดหน้าจอ ไม่ต้องรอเรียก API
+    try{v?localStorage.setItem(p[0],v):localStorage.removeItem(p[0]);}catch(e){}
+  });
 }
 function loadPortalImages(){
   callAPI('getSettings').then(function(res){
-    if(res&&res.success)applyPortalImages(res.settings.imgHero,res.settings.imgLogin);
+    if(res&&res.success)applyPortalImages(res.settings);
   }).catch(function(){});
 }
 function previewPortalImage(which){
@@ -2246,27 +2268,37 @@ function previewPortalImage(which){
 function loadPortalImageSettings(){
   callAPI('getSettings').then(function(res){
     if(!res||!res.success)return;
-    const a=document.getElementById('set-img-hero'),b=document.getElementById('set-img-login');
-    if(a)a.value=res.settings.imgHero||'';
-    if(b)b.value=res.settings.imgLogin||'';
-    previewPortalImage('hero');previewPortalImage('login');
-    applyPortalImages(res.settings.imgHero,res.settings.imgLogin);
+    PORTAL_IMG_KEYS.forEach(function(p){
+      const el=document.getElementById('set-img-'+p[0].slice(3).toLowerCase());
+      if(el)el.value=res.settings[p[0]]||'';
+    });
+    previewPortalImage('hero');previewPortalImage('login');previewPortalImage('mobile');
+    applyPortalImages(res.settings);
   }).catch(function(){});
 }
+function collectPortalImages(){
+  const out={};
+  PORTAL_IMG_KEYS.forEach(function(p){
+    const el=document.getElementById('set-img-'+p[0].slice(3).toLowerCase());
+    out[p[0]]=el?(el.value||'').trim():'';
+  });
+  return out;
+}
 function savePortalImages(){
-  const hero=(document.getElementById('set-img-hero').value||'').trim();
-  const login=(document.getElementById('set-img-login').value||'').trim();
-  if((hero&&!IMG_URL_RE.test(hero))||(login&&!IMG_URL_RE.test(login))){Swal.fire(t('warnTitle'),t('imgInvalid'),'warning');return;}
+  const s=collectPortalImages();
+  if(Object.keys(s).some(function(k){return s[k]&&!IMG_URL_RE.test(s[k]);})){Swal.fire(t('warnTitle'),t('imgInvalid'),'warning');return;}
   Swal.fire({title:t('saving'),allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-  callAPI('saveSettings',{password:currentSession?currentSession.password:'',settings:{imgHero:hero,imgLogin:login}}).then(function(res){
-    if(res.success){applyPortalImages(hero,login);Swal.fire({icon:'success',title:t('imgSaved'),timer:1800,showConfirmButton:false});}
+  callAPI('saveSettings',{password:currentSession?currentSession.password:'',settings:s}).then(function(res){
+    if(res.success){applyPortalImages(s);Swal.fire({icon:'success',title:t('imgSaved'),timer:1800,showConfirmButton:false});}
     else Swal.fire(t('errTitle'),res.message,'error');
   }).catch(handleScriptError);
 }
 function clearPortalImages(){
-  const a=document.getElementById('set-img-hero'),b=document.getElementById('set-img-login');
-  if(a)a.value='';if(b)b.value='';
-  previewPortalImage('hero');previewPortalImage('login');
+  PORTAL_IMG_KEYS.forEach(function(p){
+    const el=document.getElementById('set-img-'+p[0].slice(3).toLowerCase());
+    if(el)el.value='';
+    previewPortalImage(p[0].slice(3).toLowerCase());
+  });
   savePortalImages();
 }
 
